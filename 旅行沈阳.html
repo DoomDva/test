@@ -1,0 +1,377 @@
+import React, { useState } from 'react';
+import { MapPin, Clock, Camera, Coffee, Utensils, Info, X, ChevronRight, Navigation, Sparkles } from 'lucide-react';
+
+// --- Data Structure ---
+
+const itineraryData = [
+  {
+    day: 1,
+    theme: "皇城旧梦 (Imperial Dreams)",
+    color: "from-red-700 to-orange-600",
+    spots: [
+      {
+        id: 'd1-1',
+        time: '09:00',
+        title: '沈阳故宫',
+        subTitle: 'Mukden Palace',
+        type: 'History',
+        image: 'https://images.unsplash.com/photo-1599571343729-15822b3b728b?q=80&w=1000&auto=format&fit=crop', // Placeholder for Chinese Palace
+        desc: '一朝发祥地，两代帝王都。比起北京故宫的恢弘，这里更多了一份满族特色的生活气息。',
+        highlight: '大政殿与十王亭',
+        tips: '一定要去大政殿拍“八旗排兵布阵”的建筑格局。红墙琉璃瓦是出片神地，建议穿深色或新中式服装。',
+        food: null
+      },
+      {
+        id: 'd1-2',
+        time: '12:00',
+        title: '老边饺子馆',
+        subTitle: 'Laobian Dumpling',
+        type: 'Food',
+        image: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=1000&auto=format&fit=crop', // Placeholder for Dumplings
+        desc: '沈阳非遗美食，二百年历史的老字号。',
+        highlight: '冰花煎饺',
+        tips: '建议提前取号。如果嫌总店人多，中街周围有很多分店，味道差别不大。',
+        food: '必点：煸馅饺子'
+      },
+      {
+        id: 'd1-3',
+        time: '13:30',
+        title: '张学良旧居',
+        subTitle: 'Marshal Zhang Mansion',
+        type: 'History',
+        image: 'https://images.unsplash.com/photo-1565060169387-a4b081c7e974?q=80&w=1000&auto=format&fit=crop', // Placeholder for Brick Mansion
+        desc: '一座大帅府，半部民国史。中西合璧的建筑群令人叹为观止。',
+        highlight: '大青楼 & 赵一荻故居',
+        tips: '大青楼的“老虎厅”是当年杨常事件发生地，感受一下历史的肃杀之气。如果不请导游，建议租借电子讲解器。',
+        food: null
+      },
+      {
+        id: 'd1-4',
+        time: '18:00',
+        title: '中街 & 小南教堂',
+        subTitle: 'Middle Street Night',
+        type: 'CityWalk',
+        image: 'https://images.unsplash.com/photo-1542665174-31db64d7e0e4?q=80&w=1000&auto=format&fit=crop', // Placeholder for Night Street/Church
+        desc: '傍晚去小南天主教堂拍哥特式剪影，晚上逛中国第一条商业步行街。',
+        highlight: '教堂夕阳 & 街头小吃',
+        tips: '教堂广场很多人拍婚纱照，最佳机位在广场东南角。晚上中街虽然人多，但非常热闹，适合感受东北的烟火气。',
+        food: '中街冰点、炸鸡架'
+      }
+    ]
+  },
+  {
+    day: 2,
+    theme: "钢铁洪流与霓虹西塔 (Steel & Neon)",
+    color: "from-slate-700 to-slate-900",
+    spots: [
+      {
+        id: 'd2-1',
+        time: '09:30',
+        title: '中国工业博物馆',
+        subTitle: 'Industrial Museum',
+        type: 'Culture',
+        image: 'https://images.unsplash.com/photo-1565610488661-8d264a7dc526?q=80&w=1000&auto=format&fit=crop', // Placeholder for Industrial
+        desc: '共和国长子的钢铁脊梁。巨大的铸造车间会让你感受到一种“巨物恐惧”的美学。',
+        highlight: '铸造馆 & 铁西馆',
+        tips: '免费通过公众号预约。铁西馆还原了90年代工人村的生活场景，非常适合拍复古港风照片。',
+        food: null
+      },
+      {
+        id: 'd2-2',
+        time: '12:30',
+        title: '1905文化创意园',
+        subTitle: '1905 Creative Park',
+        type: 'Art',
+        image: 'https://images.unsplash.com/photo-1517999849204-c3a2686121cb?q=80&w=1000&auto=format&fit=crop', // Placeholder for Cafe/Art
+        desc: '就在工博隔壁，在老厂房里喝一杯咖啡，看一场独立展览。',
+        highlight: '保留了原汁原味的工业骨架',
+        tips: '这里有很多独立设计师的小店，适合淘一些独特的手工艺品。',
+        food: '犀牛书店咖啡'
+      },
+      {
+        id: 'd2-3',
+        time: '15:00',
+        title: '北陵公园 (清昭陵)',
+        subTitle: 'Beiling Park',
+        type: 'History',
+        image: 'https://images.unsplash.com/photo-1464817739973-0128fe77aaa1?q=80&w=1000&auto=format&fit=crop', // Placeholder for Ancient Tree/Park
+        desc: '皇太极的陵寝。相比故宫的紧凑，这里古松参天，更显皇家园林的宏大与苍凉。',
+        highlight: '神道 & 隆恩殿',
+        tips: '适合下午去，夕阳洒在神道的石像生上，光影绝美。冬天如果有雪，这里是沈阳最美的地方。',
+        food: null
+      },
+      {
+        id: 'd2-4',
+        time: '19:00',
+        title: '西塔朝鲜族风情街',
+        subTitle: 'Xita Street',
+        type: 'Food',
+        image: 'https://images.unsplash.com/photo-1535189043414-47a3c49a0bed?q=80&w=1000&auto=format&fit=crop', // Placeholder for Neon/Korean Food
+        desc: '这里不是韩国，但比首尔更有味道。满街的朝文招牌和霓虹灯，仿佛穿越。',
+        highlight: '最正宗的朝鲜族美食',
+        tips: '这里是不夜城。一定要买点“师任堂”打糕和辣白菜带回去。',
+        food: '西塔大冷面、泥炉烤肉、活章鱼'
+      }
+    ]
+  }
+];
+
+// --- Components ---
+
+const DetailModal = ({ spot, onClose }) => {
+  if (!spot) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
+        <div className="h-48 overflow-hidden relative">
+           <img src={spot.image} alt={spot.title} className="w-full h-full object-cover" />
+           <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/90 to-transparent flex items-end p-6">
+             <h3 className="text-3xl font-bold text-white tracking-tighter">{spot.title}</h3>
+           </div>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          <div>
+             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 mb-2">
+               {spot.type}
+             </span>
+             <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">{spot.desc}</p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800/30">
+              <Camera className="w-5 h-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
+              <div>
+                <h4 className="font-semibold text-amber-900 dark:text-amber-400 text-sm">独家机位 / Highlights</h4>
+                <p className="text-sm text-amber-800 dark:text-amber-200/80">{spot.highlight}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+              <Info className="w-5 h-5 text-emerald-600 dark:text-emerald-500 mt-1 flex-shrink-0" />
+              <div>
+                <h4 className="font-semibold text-emerald-900 dark:text-emerald-400 text-sm">避坑指南 / Tips</h4>
+                <p className="text-sm text-emerald-800 dark:text-emerald-200/80">{spot.tips}</p>
+              </div>
+            </div>
+
+            {spot.food && (
+              <div className="flex items-start gap-3 p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-100 dark:border-rose-800/30">
+                <Utensils className="w-5 h-5 text-rose-600 dark:text-rose-500 mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-rose-900 dark:text-rose-400 text-sm">必吃推荐 / Must Eat</h4>
+                  <p className="text-sm text-rose-800 dark:text-rose-200/80">{spot.food}</p>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <button 
+            onClick={onClose}
+            className="w-full py-3 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl font-medium hover:opacity-90 transition-opacity"
+          >
+            关闭 / Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const GuideCard = ({ spot, onClick, isLast }) => {
+  return (
+    <div className="relative pl-8 pb-12 group cursor-pointer" onClick={() => onClick(spot)}>
+      {/* Timeline Line */}
+      {!isLast && (
+        <div className="absolute left-[11px] top-8 bottom-0 w-0.5 bg-zinc-200 dark:bg-zinc-700 group-hover:bg-indigo-400 transition-colors duration-300"></div>
+      )}
+      
+      {/* Timeline Dot */}
+      <div className="absolute left-0 top-2 w-6 h-6 rounded-full border-4 border-white dark:border-zinc-950 bg-indigo-500 shadow-md z-10 group-hover:scale-125 transition-transform duration-300"></div>
+
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+        <div className="flex flex-col sm:flex-row h-full">
+          {/* Image Section */}
+          <div className="sm:w-1/3 h-48 sm:h-auto relative overflow-hidden">
+            <img 
+              src={spot.image} 
+              alt={spot.title} 
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
+            />
+            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+            <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm">
+              <Clock className="w-3 h-3" /> {spot.time}
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div className="flex-1 p-5 flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                    {spot.title}
+                  </h3>
+                  <p className="text-sm text-zinc-400 uppercase tracking-wide font-medium">{spot.subTitle}</p>
+                </div>
+                <div className="p-2 bg-zinc-50 dark:bg-zinc-800 rounded-full text-zinc-400 group-hover:text-indigo-500 transition-colors">
+                   <ChevronRight className="w-5 h-5" />
+                </div>
+              </div>
+              
+              <div className="mt-3 flex flex-wrap gap-2">
+                 <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs rounded-md font-medium">
+                   {spot.type}
+                 </span>
+                 {spot.food && (
+                    <span className="px-2 py-1 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs rounded-md font-medium flex items-center gap-1">
+                      <Utensils className="w-3 h-3" /> 美食
+                    </span>
+                 )}
+              </div>
+
+              <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                {spot.desc}
+              </p>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center text-xs font-medium text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+               <Sparkles className="w-3 h-3 mr-1" /> 点击查看打卡攻略
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function ShenyangTravelGuide() {
+  const [activeDay, setActiveDay] = useState(1);
+  const [selectedSpot, setSelectedSpot] = useState(null);
+
+  const currentData = itineraryData.find(d => d.day === activeDay);
+
+  return (
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans selection:bg-indigo-500 selection:text-white pb-20">
+      
+      {/* Header / Hero */}
+      <header className="relative h-[60vh] overflow-hidden flex items-center justify-center">
+        <div className="absolute inset-0">
+          <img 
+            src={activeDay === 1 
+              ? "https://images.unsplash.com/photo-1543862475-eb136770ae9b?q=80&w=1000&auto=format&fit=crop" // Palace style
+              : "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop" // Industrial/Night style
+            } 
+            alt="Hero Background" 
+            className="w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
+          />
+          <div className={`absolute inset-0 bg-gradient-to-b ${currentData.color} opacity-60 mix-blend-multiply`}></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-50 dark:from-zinc-950 via-transparent to-transparent"></div>
+        </div>
+
+        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/30 bg-white/10 backdrop-blur-md text-white/90 text-sm font-medium tracking-wide">
+            <MapPin className="w-4 h-4" /> Shenyang, China
+          </div>
+          <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight drop-shadow-xl">
+             SHENYANG
+          </h1>
+          <p className="text-xl md:text-2xl text-white/90 font-light max-w-2xl mx-auto">
+             48小时深度游 · {activeDay === 1 ? "一宫两陵的皇家气象" : "铁西工业与西塔霓虹"}
+          </p>
+        </div>
+      </header>
+
+      {/* Day Navigation */}
+      <div className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="max-w-3xl mx-auto flex items-center justify-center p-2 gap-4">
+          {[1, 2].map((day) => (
+            <button
+              key={day}
+              onClick={() => setActiveDay(day)}
+              className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+                activeDay === day 
+                ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-lg scale-105' 
+                : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              }`}
+            >
+              Day {day} <span className="hidden sm:inline font-normal opacity-70 ml-1">- {day === 1 ? 'History' : 'Industrial'}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="max-w-3xl mx-auto px-4 py-12">
+        {/* Intro Text */}
+        <div className="mb-12">
+           <div className="p-6 bg-white dark:bg-zinc-900 border-l-4 border-indigo-500 shadow-sm rounded-r-xl">
+              <h2 className="text-2xl font-bold mb-2">{currentData.theme}</h2>
+              <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                 {activeDay === 1 
+                   ? "沈阳不仅是东北的中心，更是清朝的发祥地。第一天我们将穿越回1625年，在红墙金瓦间寻找盛京的记忆，并在晚间感受现代中街的繁华。" 
+                   : "第二天是风格的剧变。从'东方鲁尔'的工业废土美学，到中国最大的朝鲜族聚居区，体验硬核与烟火气的完美碰撞。"}
+              </p>
+           </div>
+        </div>
+
+        {/* Itinerary Timeline */}
+        <div className="space-y-4">
+          {currentData.spots.map((spot, index) => (
+            <GuideCard 
+              key={spot.id} 
+              spot={spot} 
+              onClick={setSelectedSpot} 
+              isLast={index === currentData.spots.length - 1}
+            />
+          ))}
+        </div>
+
+        {/* Essentials Section */}
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="bg-zinc-100 dark:bg-zinc-900 rounded-2xl p-6">
+              <h3 className="flex items-center gap-2 font-bold text-lg mb-4">
+                 <Navigation className="w-5 h-5 text-indigo-500" /> 交通建议
+              </h3>
+              <ul className="space-y-3 text-sm text-zinc-600 dark:text-zinc-400">
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 mt-1.5"></span>
+                  <span>沈阳地铁非常发达，基本覆盖所有景点。下载“盛京通”App或支付宝刷码。</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 mt-1.5"></span>
+                  <span>打车起步价低，司机师傅通常很健谈（不仅是司机，还是免费导游）。</span>
+                </li>
+              </ul>
+           </div>
+           
+           <div className="bg-zinc-100 dark:bg-zinc-900 rounded-2xl p-6">
+              <h3 className="flex items-center gap-2 font-bold text-lg mb-4">
+                 <Coffee className="w-5 h-5 text-indigo-500" /> 特别提示
+              </h3>
+              <ul className="space-y-3 text-sm text-zinc-600 dark:text-zinc-400">
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 mt-1.5"></span>
+                  <span>西塔停车非常困难，强烈建议晚上打车前往。</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 mt-1.5"></span>
+                  <span>工业博物馆周一闭馆，请注意安排时间。</span>
+                </li>
+              </ul>
+           </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="text-center py-10 text-zinc-400 text-sm">
+         <p>Designed for Travelers Seeking Depth</p>
+         <p className="mt-2">© 2025 Shenyang Guide | Generative UI Experience</p>
+      </footer>
+
+      {/* Modal Overlay */}
+      {selectedSpot && <DetailModal spot={selectedSpot} onClose={() => setSelectedSpot(null)} />}
+    </div>
+  );
+}
