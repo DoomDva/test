@@ -40,9 +40,31 @@ def get_date_range() -> tuple[str, str]:
     return date_start, date_end
 
 
+async def _try_click(page, selectors: list[str], timeout: int = 3000) -> bool:
+    """依次尝试点击选择器列表中的第一个可见元素，成功返回 True"""
+    for sel in selectors:
+        try:
+            await page.click(sel, timeout=timeout)
+            return True
+        except Exception:
+            pass
+    return False
+
+
+async def _try_fill(page, selectors: list[str], value: str, timeout: int = 3000) -> bool:
+    """依次尝试填写选择器列表中的第一个可见输入框，成功返回 True"""
+    for sel in selectors:
+        try:
+            await page.fill(sel, value, timeout=timeout)
+            return True
+        except Exception:
+            pass
+    return False
+
+
 async def close_dialogs(page):
     """关闭页面上可能出现的弹窗"""
-    for selector in [
+    await _try_click(page, [
         "button:has-text('关闭')",
         "button:has-text('取消')",
         "button:has-text('我知道了')",
@@ -50,14 +72,7 @@ async def close_dialogs(page):
         ".ant-modal-close",        # Ant Design 关闭按钮
         "[class*='close-btn']",
         "[class*='modal-close']",
-    ]:
-        try:
-            el = page.locator(selector).first
-            if await el.is_visible():
-                await el.click()
-                await asyncio.sleep(0.5)
-        except Exception:
-            pass
+    ])
 
 
 # ──────────────────────────────────────────────
@@ -71,51 +86,28 @@ async def step_login(page):
     await close_dialogs(page)
 
     print("[2/5] 填写账号密码...")
-    # 尝试常见的输入框选择器
-    username_selectors = [
+    filled = await _try_fill(page, [
         'input[placeholder*="手机号"]',
         'input[placeholder*="账号"]',
         'input[name="username"]',
         'input[name="phone"]',
         'input[type="text"]:first-of-type',
-    ]
-    password_selectors = [
+    ], CONFIG["username"])
+    if not filled:
+        raise RuntimeError("找不到账号输入框，请检查选择器")
+
+    await _try_fill(page, [
         'input[placeholder*="密码"]',
         'input[name="password"]',
         'input[type="password"]',
-    ]
+    ], CONFIG["password"])
 
-    username_filled = False
-    for sel in username_selectors:
-        try:
-            await page.fill(sel, CONFIG["username"], timeout=3000)
-            username_filled = True
-            break
-        except Exception:
-            pass
-    if not username_filled:
-        raise RuntimeError("找不到账号输入框，请检查选择器")
-
-    for sel in password_selectors:
-        try:
-            await page.fill(sel, CONFIG["password"], timeout=3000)
-            break
-        except Exception:
-            pass
-
-    # 点击登录按钮
-    login_btn_selectors = [
+    await _try_click(page, [
         'button:has-text("登录")',
         'button[type="submit"]',
         'input[type="submit"]',
         '[class*="login-btn"]',
-    ]
-    for sel in login_btn_selectors:
-        try:
-            await page.click(sel, timeout=3000)
-            break
-        except Exception:
-            pass
+    ])
 
     await asyncio.sleep(1)
 
@@ -145,35 +137,19 @@ async def step_navigate(page):
     print("\n[4/5] 导航到订货通知单...")
     await close_dialogs(page)
 
-    # 点击"采购管理"菜单
-    procurement_selectors = [
+    await _try_click(page, [
         'text=采购管理',
         '[class*="menu-item"]:has-text("采购管理")',
         'li:has-text("采购管理")',
-    ]
-    for sel in procurement_selectors:
-        try:
-            await page.click(sel, timeout=5000)
-            await asyncio.sleep(0.8)
-            break
-        except Exception:
-            pass
+    ], timeout=5000)
+    await asyncio.sleep(0.8)
 
-    # 点击"订货通知单"子菜单
-    order_notice_selectors = [
+    await _try_click(page, [
         'text=订货通知单',
         '[class*="menu-item"]:has-text("订货通知单")',
         'li:has-text("订货通知单")',
-    ]
-    for sel in order_notice_selectors:
-        try:
-            await page.click(sel, timeout=5000)
-            await asyncio.sleep(1)
-            break
-        except Exception:
-            pass
+    ], timeout=5000)
 
-    # 等待页面内容加载
     await page.wait_for_load_state("networkidle", timeout=15000)
     print("      已进入订货通知单页面")
 
@@ -183,55 +159,32 @@ async def step_query(page, date_start: str, date_end: str):
     print(f"\n[5/5] 筛选日期 {date_start} ~ {date_end} 并查询...")
     await close_dialogs(page)
 
-    # 填写开始日期
-    date_start_selectors = [
+    await _try_fill(page, [
         'input[placeholder*="开始日期"]',
         'input[placeholder*="起始日期"]',
         '[class*="date-start"] input',
         '[class*="start-date"] input',
-    ]
-    for sel in date_start_selectors:
-        try:
-            await page.fill(sel, date_start, timeout=3000)
-            await page.keyboard.press("Tab")
-            break
-        except Exception:
-            pass
+    ], date_start)
+    await page.keyboard.press("Tab")
 
-    # 填写结束日期
-    date_end_selectors = [
+    await _try_fill(page, [
         'input[placeholder*="结束日期"]',
         'input[placeholder*="截止日期"]',
         '[class*="date-end"] input',
         '[class*="end-date"] input',
-    ]
-    for sel in date_end_selectors:
-        try:
-            await page.fill(sel, date_end, timeout=3000)
-            await page.keyboard.press("Tab")
-            break
-        except Exception:
-            pass
+    ], date_end)
+    await page.keyboard.press("Tab")
 
     await asyncio.sleep(0.5)
 
-    # 点击查询按钮
-    query_selectors = [
+    await _try_click(page, [
         'button:has-text("查询")',
         'button:has-text("搜索")',
         '[class*="search-btn"]',
         '[class*="query-btn"]',
-    ]
-    for sel in query_selectors:
-        try:
-            await page.click(sel, timeout=5000)
-            break
-        except Exception:
-            pass
+    ], timeout=5000)
 
-    # 等待查询结果加载
     await page.wait_for_load_state("networkidle", timeout=20000)
-    # 等待表格行出现
     for table_sel in ["tr.el-table__row", ".ant-table-row", "[class*='table-row']", "tbody tr"]:
         try:
             await page.wait_for_selector(table_sel, timeout=10000, state="visible")
@@ -246,39 +199,22 @@ async def step_export(page, download_dir: str):
     print("\n[导出] 全选数据并导出 Excel...")
     await close_dialogs(page)
 
-    # 全选（通常是表头的 checkbox）
-    select_all_selectors = [
+    await _try_click(page, [
         'th input[type="checkbox"]',
         '.el-table__header input[type="checkbox"]',
         '.ant-table-thead input[type="checkbox"]',
         'button:has-text("全选")',
         '[class*="select-all"]',
-    ]
-    for sel in select_all_selectors:
-        try:
-            await page.click(sel, timeout=3000)
-            await asyncio.sleep(0.5)
-            break
-        except Exception:
-            pass
+    ])
+    await asyncio.sleep(0.5)
 
-    # 点击导出按钮
-    export_selectors = [
+    export_clicked = await _try_click(page, [
         'button:has-text("导出")',
         'button:has-text("导出Excel")',
         'button:has-text("下载")',
         '[class*="export-btn"]',
         '[class*="download-btn"]',
-    ]
-    export_clicked = False
-    for sel in export_selectors:
-        try:
-            await page.click(sel, timeout=5000)
-            export_clicked = True
-            await asyncio.sleep(0.5)
-            break
-        except Exception:
-            pass
+    ], timeout=5000)
 
     if not export_clicked:
         raise RuntimeError("找不到导出按钮，请检查页面元素")
@@ -302,7 +238,6 @@ async def step_export(page, download_dir: str):
     print(f"      等待文件下载到：{download_dir}")
     try:
         async with page.expect_download(timeout=60000) as dl_info:
-            # 若导出按钮点击后未触发下载，再尝试一次确认按钮
             pass
         download = await dl_info.value
         filename = download.suggested_filename or f"订货通知单_{datetime.today().strftime('%Y%m%d_%H%M%S')}.xlsx"
